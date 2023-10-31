@@ -265,15 +265,6 @@ def register_all_pascal_voc(root="datasets"):
         )
         MetadataCatalog.get(name).evaluator_type = "pascal_voc"
 
-datasets = {
-    'dataset_all': metadata["thing_classes"],
-    'dataset_base': metadata["base_classes"],
-    'dataset_novel': metadata["novel_classes"],
-}
-for dataset_name, classes in datasets.items():
-    register_dataset(dataset_name, classes, metadata)
-
-
 # Register them all under "./datasets"
 register_all_coco()
 register_all_lvis()
