@@ -30,6 +30,7 @@ from fsdet.evaluation import (
     DatasetEvaluators,
     LVISEvaluator,
     PascalVOCDetectionEvaluator,
+    fsucustomEvaluator,
     verify_results,
 )
 
