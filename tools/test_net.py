@@ -30,7 +30,7 @@ from fsdet.evaluation import (
     DatasetEvaluators,
     LVISEvaluator,
     PascalVOCDetectionEvaluator,
-    fsucustomEvaluator,
+    FSUCustomDatasetEvaluator,
     verify_results,
 )
 
@@ -65,7 +65,7 @@ class Trainer(DefaultTrainer):
             return LVISEvaluator(dataset_name, cfg, True, output_folder)
         if evaluator_type == "fsucustom":
             # the true in this function call refers to it being distributed. Probably good?
-            return fsucustomEvaluator(dataset_name, cfg, True, output_folder)
+            return FSUCustomDatasetEvaluator(dataset_name, cfg, True, output_folder)
         if len(evaluator_list) == 0:
             raise NotImplementedError(
                 "no Evaluator for the dataset {} with the type {}".format(
