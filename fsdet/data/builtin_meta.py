@@ -443,7 +443,7 @@ def _get_coco_fewshot_instances_meta():
 
 
 def _get_lvis_instances_meta_v0_5():
-    from .lvis_v0_5_categories import LVIS_CATEGORIES
+    from lvis_v0_5_categories import LVIS_CATEGORIES
 
     assert len(LVIS_CATEGORIES) == 1230
     cat_ids = [k["id"] for k in LVIS_CATEGORIES]
@@ -460,7 +460,7 @@ def _get_lvis_instances_meta_v0_5():
 
 
 def _get_lvis_fewshot_instances_meta_v0_5():
-    from .lvis_v0_5_categories import LVIS_CATEGORIES_NOVEL
+    from lvis_v0_5_categories import LVIS_CATEGORIES_NOVEL
 
     all_cats = _get_lvis_instances_meta_v0_5()["thing_classes"]
     lvis_categories_sub = [
@@ -496,3 +496,4 @@ def _get_builtin_metadata(dataset_name):
     elif dataset_name == 'fsucustom_fewshot':
         return _get_fsucustom_fewshot_instances_meta()
     raise KeyError("No built-in metadata for dataset {}".format(dataset_name))
+

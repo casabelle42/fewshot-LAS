@@ -18,13 +18,61 @@ from detectron2.data.datasets.lvis import (
     register_lvis_instances,
 )
 
-from .builtin_meta import _get_builtin_metadata
-from .meta_coco import register_meta_coco
-from .meta_lvis import register_meta_lvis
-from .meta_pascal_voc import register_meta_pascal_voc
-from .meta_customfsu import register_meta_customfsu
+from builtin_meta import _get_builtin_metadata
+from meta_coco import register_meta_coco
+from meta_lvis import register_meta_lvis
+from meta_pascal_voc import register_meta_pascal_voc
+from meta_fsucustom import register_meta_fsucustom
 
 # ==== Predefined datasets and splits for COCO ==========
+
+
+def register_all_fsucustom(root="datasets"):
+    # for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_COCO.items():
+    #     for key, (image_root, json_file) in splits_per_dataset.items():
+    #         # Assume pre-defined datasets live in `./datasets`.
+    #         register_coco_instances(
+    #             key,
+    #             _get_builtin_metadata(dataset_name),
+    #             os.path.join(root, json_file)
+    #             if "://" not in json_file
+    #             else json_file,
+    #             os.path.join(root, image_root),
+    #         )
+
+    # register meta datasets
+    METASPLITS = [
+        (
+            "fsucustom_train_all",
+            "custom/train",
+            "custom/annotations/train_FSU_ISL_synthetic_LAS_CCTV.json",
+        ),
+        (
+            "fsucustom_train_base",
+            "custom/train",
+            "custom/annotations/train_FSU_ISL_synthetic_LAS_CCTV.json",
+        ),
+        #("fsucustom_test_all", "custom/val", "custom/annotations/5k.json"),
+        ("fsucustom_test_base", "custom/val", "custom/annotations/val_FSU_ISL_synthetic_LAS_CCTV.json"),
+        ("fsucustom_test_novel", "custom/val", "custom/annotations/val_FSU_ISL_real_LAS_CCTV.json"),
+    ]
+
+    # register small meta datasets for fine-tuning stage
+    '''for prefix in ["all", "novel"]:
+        for shot in [1, 2, 3, 5, 10, 30]:
+            for seed in range(10):
+                seed = "" if seed == 0 else "_seed{}".format(seed)
+                name = "coco_trainval_{}_{}shot{}".format(prefix, shot, seed)
+                METASPLITS.append((name, "coco/trainval2014", ""))'''
+
+    for name, imgdir, annofile in METASPLITS:
+        register_meta_fsucustom(
+            name,
+            _get_builtin_metadata("fsucustom_fewshot"),
+            os.path.join(root, imgdir),
+            os.path.join(root, annofile),
+        )
+
 
 _PREDEFINED_SPLITS_COCO = {}
 _PREDEFINED_SPLITS_COCO["coco"] = {
@@ -265,7 +313,10 @@ def register_all_pascal_voc(root="datasets"):
         )
         MetadataCatalog.get(name).evaluator_type = "pascal_voc"
 
+
+
 # Register them all under "./datasets"
+register_all_fsucustom()
 register_all_coco()
 register_all_lvis()
 register_all_pascal_voc()
