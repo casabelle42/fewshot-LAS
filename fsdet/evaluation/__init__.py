@@ -1,4 +1,5 @@
 from .coco_evaluation import COCOEvaluator
+from .fsucustom_evaluation import FSUCustomDatasetEvaluator
 from .evaluator import (
     DatasetEvaluator,
     DatasetEvaluators,
