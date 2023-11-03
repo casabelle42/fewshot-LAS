@@ -22,7 +22,9 @@ from tabulate import tabulate
 
 
 class FSUCustomDatasetEvaluator(DatasetEvaluator):
-    def __init__(self, dataset_name, outuput_dir=None): # initial needed variables
+    def __init__(self, dataset_name, cfg, distributed, outuput_dir=None): # initial needed variables
+        print("HI MOM")
+        self._distributed = distributed
         self._metadata = MetadataCatalog.get(dataset_name)
         self._dataset_name = dataset_name
         self._output_dir = output_dir
@@ -33,6 +35,11 @@ class FSUCustomDatasetEvaluator(DatasetEvaluator):
             or "base" in dataset_name
             or "novel" in dataset_name
         )
+
+        json_file = PathManager.get_local_path(self._metadata.json_file)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self._coco_api = COCO(json_file)
+
 
     def reset(self): # reset predictions
         self._predictions = []
@@ -57,18 +64,18 @@ class FSUCustomDatasetEvaluator(DatasetEvaluator):
             return {}
 
         if self._output_dir:
-                    PathManager.mkdirs(self._output_dir)
-                    file_path = os.path.join(
-                        self._output_dir, "instances_predictions.pth"
-                    )
-                    with PathManager.open(file_path, "wb") as f:
-                        torch.save(self._predictions, f)
+            PathManager.mkdirs(self._output_dir)
+            file_path = os.path.join(
+                self._output_dir, "instances_predictions.pth"
+            )
+            with PathManager.open(file_path, "wb") as f:
+                torch.save(self._predictions, f)
 
-                self._results = OrderedDict()
-                if "instances" in self._predictions[0]:
-                    self._eval_predictions()
-                # Copy so the caller can do whatever with results
-                return copy.deepcopy(self._results)
+        self._results = OrderedDict()
+        if "instances" in self._predictions[0]:
+            self._eval_predictions()
+        # Copy so the caller can do whatever with results
+        return copy.deepcopy(self._results)
 
     def _eval_predictions(self):
         """
