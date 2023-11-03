@@ -18,11 +18,11 @@ from detectron2.data.datasets.lvis import (
     register_lvis_instances,
 )
 
-from builtin_meta import _get_builtin_metadata
-from meta_coco import register_meta_coco
-from meta_lvis import register_meta_lvis
-from meta_pascal_voc import register_meta_pascal_voc
-from meta_fsucustom import register_meta_fsucustom
+from .builtin_meta import _get_builtin_metadata
+from .meta_coco import register_meta_coco
+from .meta_lvis import register_meta_lvis
+from .meta_pascal_voc import register_meta_pascal_voc
+from .meta_fsucustom import register_meta_fsucustom
 
 # ==== Predefined datasets and splits for COCO ==========
 
