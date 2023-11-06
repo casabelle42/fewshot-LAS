@@ -49,10 +49,11 @@ def register_meta_fsucustom(name, metadata, rootdir, annofile):
         lambda: load_fsucustom_json(annofile, rootdir, name),
     )
 
+    print(f'the name is {name}')
     MetadataCatalog.get(name).set(
         json_file=annofile,
         image_root=rootdir,
-        evaluator_type="fsucustom",
+        evaluator_type="fsucustom", #change this and it will work for other dataset in evaluation/evalutor
         dirname="datasets",
         **metadata,
     )
