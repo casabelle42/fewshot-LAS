@@ -32,12 +32,12 @@ def load_fsucustom_json(json_filename, root, dataset_name):
             "image_id" :  file['image_id'], # image unique ID
             "height" : json_file['images'][file['image_id']]['height'], # height of image
             "width" : json_file['images'][file['image_id']]['width'], # width of image
-            "annotations": {
+            "annotations": [{
                 "category_id" : file['category_id'], # class unique ID
                 "bbox" : file['bbox'], # bbox coordinates
                 "bbox_mode" : BoxMode.XYWH_ABS, # bbox mode, depending on your format
                 "iscrowd": file['iscrowd']
-            }
+            }]
         }
         data.append(record)
     print(data[0])
@@ -52,7 +52,7 @@ def register_meta_fsucustom(name, metadata, rootdir, annofile):
     MetadataCatalog.get(name).set(
         json_file=annofile,
         image_root=rootdir,
-        evaluator_type="coco",
+        evaluator_type="fsucustom",
         dirname="datasets",
         **metadata,
     )
