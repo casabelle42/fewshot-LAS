@@ -22,7 +22,7 @@ from tabulate import tabulate
 
 
 class FSUCustomDatasetEvaluator(DatasetEvaluator):
-    def __init__(self, dataset_name, cfg, distributed, outuput_dir=None): # initial needed variables
+    def __init__(self, dataset_name, cfg, distributed, output_dir=None): # initial needed variables
         print("HI MOM")
         self._distributed = distributed
         self._metadata = MetadataCatalog.get(dataset_name)
@@ -34,12 +34,16 @@ class FSUCustomDatasetEvaluator(DatasetEvaluator):
             "all" in dataset_name
             or "base" in dataset_name
             or "novel" in dataset_name
-        )
+        ) 
 
+        print(self._is_splits)
+        self._base_classes = self._metadata.get("base_classes")
+        self._novel_classes = self._metadata.get("novel_classes")
         json_file = PathManager.get_local_path(self._metadata.json_file)
         with contextlib.redirect_stdout(io.StringIO()):
             self._coco_api = COCO(json_file)
-
+        
+        self._do_evaluation = "annotations" in self._coco_api.dataset
 
     def reset(self): # reset predictions
         self._predictions = []
@@ -54,6 +58,7 @@ class FSUCustomDatasetEvaluator(DatasetEvaluator):
                     instances, input["image_id"]
                 )
             self._predictions.append(prediction)
+        
 
     def evaluate(self): # evaluate predictions
 
@@ -111,7 +116,7 @@ class FSUCustomDatasetEvaluator(DatasetEvaluator):
             self._logger.info("Annotations are not available for evaluation.")
             return
 
-        self._logger.info("Evaluating predictions ...")
+        self._logger.info("Evaluating predictions ...fsucustom")
         if self._is_splits:
             self._results["bbox"] = {}
             for split, classes, names in [
@@ -127,6 +132,7 @@ class FSUCustomDatasetEvaluator(DatasetEvaluator):
                     self._metadata.get("novel_classes"),
                 ),
             ]:
+                print(f'doing split:{split}, classes:{classes}, names:{names}')
                 if (
                     "all" not in self._dataset_name
                     and split not in self._dataset_name
