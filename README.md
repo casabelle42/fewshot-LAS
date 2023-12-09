@@ -31,4 +31,4 @@ python3 -m tools.ckpt_surgery --src1 checkpoints/fsucustom/faster_rcnn/faster_rc
 ```
 # Train on balanced dataset
 ```
-python3 -m tools.train_net --num-gpus 8 --config-file configs/fsu/all_1shot.yaml --opts MODEL.WEIGHTS $WEIGHTS_PATH 
+python3 -m tools.train_net --num-gpus 8 --config-file configs/fsu/all_1shot.yaml --opts MODEL.WEIGHTS checkpoints/coco/faster_rcnn/faster_rcnn_combined/model_reset_combine.pth
