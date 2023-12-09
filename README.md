@@ -29,3 +29,6 @@ python3 -m tools.train_net --num-gpus 1 --config-file configs/fsucustom-detectio
 ```
 python3 -m tools.ckpt_surgery --src1 checkpoints/fsucustom/faster_rcnn/faster_rcnn_R_101_FPN_ft_fc_all_1shot/model_final.pth --src2 checkpoints/coco/faster_rcnn/faster_rcnn_R_101_FPN_ft_novel_1shot/model_final.pth --method combine --save-dir checkpoints/coco/faster_rcnn/faster_rcnn_combined --coco
 ```
+# Train on balanced dataset
+```
+python3 -m tools.train_net --num-gpus 8 --config-file configs/fsu/all_1shot.yaml --opts MODEL.WEIGHTS $WEIGHTS_PATH 
