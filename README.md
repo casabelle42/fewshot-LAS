@@ -25,3 +25,7 @@ python3 -m tools.ckpt_surgery --src1 checkpoints/fsucustom/faster_rcnn/faster_rc
 ```
 python3 -m tools.train_net --num-gpus 1 --config-file configs/fsucustom-detection/novel_train_last_layer.yaml --opts MODEL.WEIGHTS checkpoints/fsucustom/faster_rcnn/fewshot_fine_tune_stage_1/model_reset_remove.pth
 ```
+# Combining layers
+```
+python3 -m tools.ckpt_surgery --src1 checkpoints/fsucustom/faster_rcnn/faster_rcnn_R_101_FPN_ft_fc_all_1shot/model_final.pth --src2 configs/fsucustom-detection/novel_train_last_layer.yaml --method combine --save-dir checkpoints/coco/faster_rcnn/faster_rcnn_combined --coco
+```
