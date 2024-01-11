@@ -12,7 +12,7 @@ python3 -m tools.test_net --num-gpus 1 --config-file configs/fsucustom-detection
 ```
 # Calling demo (test)
 ```
-python3 -m demo.demo --config-file /configs/fsu/all_1shot.yaml --input input1.png --opts MODEL.WEIGHTS /checkpoints/coco/faster_rcnn/faster_rcnn_R_101_FPN_ft_all_1shot_final/model_final.pth output= save/
+python3 -m demo.demo --config-file configs/fsu/all_1shot.yaml --input input1.jpg --output= save --opts MODEL.WEIGHTS checkpoints/coco/faster_rcnn/t1_faster_rcnn_R_101_FPN_final 
 ```
 # Calling few shot fine tuning stage 1
 ```
