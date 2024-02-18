@@ -7,7 +7,7 @@ import datetime
 from datetime import datetime
 from PIL import Image
 
-def create_image_mask_dictionary(object_seg):
+def create_image_mask_dictionary(segImage):
     """
     This function will create a dictionary that maps each color of an instance segmentation image
     to a binary mask.
@@ -15,7 +15,7 @@ def create_image_mask_dictionary(object_seg):
     Parameters
     _________
 
-    object_seg : image object
+    segImage : image object
         Should be an instance segmentation image
 
 
@@ -26,8 +26,20 @@ def create_image_mask_dictionary(object_seg):
         the dictionary that maps each individual color in the image to a binary mask for that color.
 
     """
-    collections = {}
+    #if the image was opened in opencv, which opens them in bgr, then flip everything
+
+    if hasattr(segImage, 'shape'):
+        h, w, _ = segImage.shape
+        segImage = cv2.cvtColor(segImage, cv2.COLOR_BGR2RGB)
+
+    else:
+        w, h = segImage.size
+
+    # extract all of the unique colors
+    object_seg = np.array(segImage)
     colors = np.unique(object_seg.reshape(-1, object_seg.shape[2]), axis=0)
+
+    collections = {}
     for k in colors:
         color = tuple(k)
         if color not in collections.keys():
@@ -43,7 +55,7 @@ def get_color(colorstring):
     r = int(r.replace('R=', ''))
     g = int(g.replace('G=', ''))
     b = int(b.replace('B=', ''))
-    return((b, g, r))
+    return((r, g, b))
 
 def read_json(filename):
     # Opening JSON file
@@ -64,7 +76,8 @@ def read_json(filename):
             else:
                 print('I have seen that color before')
                 if (colorMap[c] != i["Mesh"]):
-                    raise SystemExit(f'{colorMap[c]} and {i["Mesh"]} do not match, although they both have {c} assigned to them')
+                    print(f'{colorMap[c]} and {i["Mesh"]} do not match for {filename}, although they both have {c} assigned to them')
+                    return
     return colorMap
 
 def datasetInfo(version, description, contributor, date=None):
@@ -208,7 +221,7 @@ def annotationSingleImage(img_id, seg_mask, categories, colorMap):
     all_masks = create_image_mask_dictionary(seg_mask)
 
     id = 0
-    print
+    
     for color in all_masks:
 
         if not color == (0, 0, 0):
@@ -221,12 +234,15 @@ def annotationSingleImage(img_id, seg_mask, categories, colorMap):
                 area += cv2.contourArea(c)
                 cnts = np.concatenate(c)
             x,y,w,h = cv2.boundingRect(cnts)
+
             annotation.append({'id':id, 'image_id':img_id,'category_id':categories.index(colorMap[color]),
                             'bbox':[x,y,w,h], 'segmentation': np.transpose(cnts).tolist(), 'area':area, 'iscrowd':0})
             id +=1
     return annotation
    
-def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap, postFix='.png', category=None, date=None, json_file=None, jsonFileName=None, version=None, description=None, contributor=None, lnames=None):
+def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap, imgpostFix='.png', segpostFix='.png', 
+                            category=None, date=None, json_file=None, jsonFileName=None, version=None, description=None, 
+                            contributor=None, lnames=None):
     """
     This function will create a dictionary that collects all of the Images 
     for the COCO-type dataset.
@@ -249,8 +265,11 @@ def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap,
     colorMap : dict
         maps each color to the category id
 
-    postFix : str
-        the ending of the image. ex: .png, or .jpg, etc. This is optional. The default is .png.
+    imgpostFix : str
+        the ending of the real image. ex: .png, or .jpg, etc. This is optional. The default is .png.
+    
+    segpostFix : str
+        the ending of the segmentation image. ex: .png, or .jpg, etc. This is optional. The default is .png.
 
     category : list
         List of category types. Optional - you dont have to over-ride it, but then you have to change
@@ -302,7 +321,7 @@ def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap,
         'Mini_Hinge', 'Mini_Shade', 'Cylinder', 'Cylinder_Base', 'PTZ', 'Mic']
 
     if jsonFileName is None:
-        jsonFileName = 'FSU_ISL_SYNTHETIC_LAS_CCTV.json'
+        jsonFileName = 'FSU_ISL_synthetic_LAS_CCTV.json'
         
     if json_file is None:
         info = datasetInfo(version, description, contributor, date)
@@ -315,8 +334,8 @@ def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap,
         last_idJson = jsonImgList[len(jsonImgList)-1]['id']
         annotationList = json_file['annotations']
         
-    imgList = datasetImages(img_dir, imagePattern, lnames['id'], postFix)
-    
+    imgList = datasetImages(img_dir, imagePattern, lnames['id'], imgpostFix)
+    last_idAnnotation = 0
     for i, img in enumerate(imgList):
         if json_file is not None:
 
@@ -327,9 +346,14 @@ def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap,
                 prevId = img['id']
                 img['id'] = prevId + last_idJson
                 jsonImgList.append(img)
-        seg_mask = cv2.imread(os.path.join(seg_dir, img['file_name'].replace(imagePattern, segPattern)))
+        seg_filepath = os.path.join(seg_dir, img['file_name'].replace(imagePattern, segPattern).replace(imgpostFix, segpostFix))
+        seg_mask = cv2.imread(seg_filepath)
         single_img = annotationSingleImage(img['id'], seg_mask, category, colorMap)
+        if len(annotationList) > 0:
+            last_idAnnotation = annotationList[len(annotationList)-1]['id']
         for anns in single_img:
+            prevAnnId = anns['id']
+            anns['id'] = prevAnnId + last_idAnnotation
             annotationList.append(anns)
     if json_file is not None:
         imgList = jsonImgList
@@ -344,46 +368,54 @@ def create_annotation_file(img_dir, seg_dir, imagePattern, segPattern, colorMap,
         
     return(finalDict)
 
-def driver_code():
+def main():
     #start_time = datetime.now()
     #constants
 
-    ROOTWALKDIR = r"/home/cspooner/LAS/few-shot-object-detection/datasets/custom/Cone"
-    JSON_FILENAME = 'FSU_ISL_SYNTHETIC_LAS_CCTV.json'
+    class_types = ['Cone', 'Cylinder', 'Dome', 'Dome2', 'Square', 'SquareShade', 'Penta', 'Hexa', 'Mini', 'PTZ']
     
-    IPAT = 'Img'
-    SPAT = 'Seg'
-
-    distance = ["Close", "Far"]
-    
-    root_walk_dirlist = os.listdir(ROOTWALKDIR)
-
-    if not os.path.exists(JSON_FILENAME):
-        print(f"{JSON_FILENAME} does not exists. It will be created.")
-        json_object = None
-    
-    else:
-        print(f"{JSON_FILENAME} exists, adding information to this file.")
-        with open(JSON_FILENAME, 'r') as infile:
-            json_object = json.load(infile)
-
-
-    for dirs in root_walk_dirlist:
+    for ct in class_types:
+        ROOTWALKDIR = rf"F:\Files to be processed\{ct}"
+        JSON_FILENAME = 'FSU_ISL_synthetic_LAS_CCTV.json'
         
-        dirspath = os.path.join(ROOTWALKDIR, dirs)
-        alistdir = os.listdir(dirspath)
-        rootpath = os.path.join(dirspath, alistdir[0])
-    
-        seg_map_file = os.path.join(rootpath, 'GTSegmentationGenerator', 'segmentation_info.json')
-        colorMap = read_json(seg_map_file)      
-    
-        for dist in distance:
-            img_dir = os.path.join(rootpath, f'{IPAT}1', dist)
-            seg_dir = os.path.join(rootpath, f'{SPAT}1', dist)
-            print(img_dir)
+        IPAT_dir = 'Img1'
+        SPAT_dir = 'Seg1'
+        IPAT = 'Img'
+        SPAT = 'Seg'
+        IMGPOSTFIX = '.png'
+        SEGPOSTFIX = '.png'
+
+        distance = ["Close", "Far"]
         
-            annotation_dict = create_annotation_file(img_dir, seg_dir, IPAT, SPAT, colorMap, json_file=json_object)
+        root_walk_dirlist = os.listdir(ROOTWALKDIR)
+
+        if not os.path.exists(JSON_FILENAME):
+            print(f"{JSON_FILENAME} does not exists. It will be created.")
+            json_object = None
+        
+        else:
+            print(f"{JSON_FILENAME} exists, adding information to this file.")
+            with open(JSON_FILENAME, 'r') as infile:
+                json_object = json.load(infile)
+
+
+        for dirs in root_walk_dirlist:
+            
+            dirspath = os.path.join(ROOTWALKDIR, dirs)
+            alistdir = os.listdir(dirspath)
+            
+            rootpath = os.path.join(dirspath, alistdir[0])
+        
+            seg_map_file = os.path.join(rootpath, 'GTSegmentationGenerator', 'segmentation_info.json')
+            colorMap = read_json(seg_map_file)      
+        
+            for dist in distance:
+                img_dir = os.path.join(rootpath, f'{IPAT_dir}', dist)
+                seg_dir = os.path.join(rootpath, f'{SPAT_dir}', dist)
+                print(img_dir)
+            
+                annotation_dict = create_annotation_file(img_dir, seg_dir, IPAT, SPAT, colorMap, imgpostFix=IMGPOSTFIX, segpostFix=SEGPOSTFIX, json_file=json_object, jsonFileName=JSON_FILENAME)
     
 
 if __name__ == "__main__":
-    driver_code()
+    main()
